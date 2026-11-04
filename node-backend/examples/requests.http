@@ -1,0 +1,30 @@
+@baseUrl = https://gateway.your-domain.com
+@appKey = REPLACE_WITH_THIS_APPLICATIONS_KEY
+@jobId = REPLACE_WITH_THE_RETURNED_JOB_ID
+
+### Compatible with your existing number/message JSON
+POST {{baseUrl}}/sms-send/
+Authorization: Bearer {{appKey}}
+Idempotency-Key: notification-001
+Content-Type: application/json
+
+{
+  "number": "+639171234567",
+  "message": "Hello from my application!"
+}
+
+### Status for the same application
+GET {{baseUrl}}/api/v1/sms/{{jobId}}
+Authorization: Bearer {{appKey}}
+
+### Gateway connection and modem readiness report
+GET {{baseUrl}}/api/v1/health
+Authorization: Bearer {{appKey}}
+
+### List this application's jobs
+GET {{baseUrl}}/api/v1/sms?page=0&limit=20
+Authorization: Bearer {{appKey}}
+
+### Cancel only if still queued
+DELETE {{baseUrl}}/api/v1/sms/{{jobId}}
+Authorization: Bearer {{appKey}}

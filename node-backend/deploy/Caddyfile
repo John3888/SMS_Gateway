@@ -1,0 +1,5 @@
+# Replace this domain and point its DNS to your backend server.
+# Run Caddy on the same host as the backend; HTTPS/WSS use public port 443.
+gateway.your-domain.com {
+    reverse_proxy 127.0.0.1:3000
+}

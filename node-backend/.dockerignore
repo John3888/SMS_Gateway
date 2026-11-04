@@ -1,0 +1,8 @@
+node_modules
+.env
+app-keys.json
+data
+*.sqlite*
+test
+coverage
+.git

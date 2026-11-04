@@ -1,0 +1,18 @@
+[
+  {
+    "id": "orders",
+    "key": "REPLACE_WITH_A_RANDOM_APPLICATION_SECRET_AT_LEAST_32_CHARACTERS",
+    "rate_per_minute": 10,
+    "burst": 5,
+    "daily_limit": 200,
+    "max_pending": 20
+  },
+  {
+    "id": "alerts",
+    "key": "REPLACE_WITH_ANOTHER_RANDOM_APPLICATION_SECRET_AT_LEAST_32_CHARACTERS",
+    "rate_per_minute": 10,
+    "burst": 5,
+    "daily_limit": 200,
+    "max_pending": 20
+  }
+]
