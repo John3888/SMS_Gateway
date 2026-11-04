@@ -7,11 +7,20 @@
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "start": "node --env-file-if-exists=.env src/index.mjs",
-    "dev": "node --watch --env-file-if-exists=.env src/index.mjs",
+    "dev": "wrangler dev",
+    "dev:node": "node --watch --env-file-if-exists=.env src/index.mjs",
+    "build": "wrangler deploy --dry-run --outdir .worker-build",
+    "deploy": "wrangler deploy",
+    "setup:cloudflare": "node scripts/setup-cloudflare.mjs",
+    "secrets:cloudflare": "wrangler secret bulk cloudflare-secrets.json",
+    "test:live:cloudflare": "node test/cloudflare-live.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "express": "^5.1.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
   }
 }

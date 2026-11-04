@@ -1,0 +1,3 @@
+# Public test credentials for local development only; never upload these values.
+DEVICE_KEY="local-test-device-key-000000000000000000000"
+APP_KEYS='[{"id":"local-test","key":"local-test-application-key-000000000000000000"}]'

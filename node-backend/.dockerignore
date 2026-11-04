@@ -1,6 +1,13 @@
 node_modules
 .env
+.env.*
+!.env.example
 app-keys.json
+cloudflare-secrets.json
+.dev.vars
+.dev.vars.*
+.wrangler
+.worker-build
 data
 *.sqlite*
 test
