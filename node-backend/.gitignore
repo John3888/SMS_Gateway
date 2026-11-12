@@ -3,15 +3,6 @@ node_modules/
 .env.*
 !.env.example
 app-keys.json
-data/
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal
 coverage/
-.wrangler/
-.worker-build/
-.dev.vars
-.dev.vars.*
-!.dev.vars.example
-cloudflare-secrets.json
+dist/
 !README.md

@@ -1,0 +1,65 @@
+import express from "express";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
+import { validateConfig } from "./config/env.js";
+import type { GatewayOptions } from "./types/gateway.types.js";
+import { AppError, errorHandler } from "./middlewares/error.middleware.js";
+import { SmsService } from "./modules/sms/sms.services.js";
+import { createRealtime } from "./realtime.js";
+import { createRoutes } from "./routes.js";
+export function createGateway(options: GatewayOptions) {
+  const config = validateConfig(options);
+  const queue = new SmsService(config.limits, options.clock);
+  const app = express();
+  app.disable("x-powered-by");
+  const server = createServer({ maxHeaderSize: 16384 }, app);
+  server.requestTimeout = 15000;
+  server.headersTimeout = 10000;
+  server.keepAliveTimeout = 5000;
+  let closing = false;
+  const realtime = createRealtime(server, queue, config, () => closing);
+  app.use((_req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    next();
+  });
+  app.use((_req, _res, next) =>
+    next(closing ? new AppError(503, "Backend is stopping") : undefined),
+  );
+  app.use(createRoutes(config, queue, realtime));
+  app.use((_req, _res, next) => next(new AppError(404, "Endpoint not found")));
+  app.use(errorHandler);
+  return {
+    app,
+    server,
+    queue,
+    listen(port = config.port || 3000, host = config.host || "127.0.0.1") {
+      return new Promise<AddressInfo>((resolve, reject) => {
+        const onError = (error: Error) => {
+          server.off("listening", onListening);
+          reject(error);
+        };
+        const onListening = () => {
+          server.off("error", onError);
+          resolve(server.address() as AddressInfo);
+        };
+        server.once("error", onError);
+        server.once("listening", onListening);
+        server.listen(port, host);
+      });
+    },
+    async close() {
+      if (closing) return;
+      closing = true;
+      queue.clear();
+      await realtime.close();
+      if (server.listening) {
+        await new Promise<void>((resolve) => {
+          server.close(() => resolve());
+          server.closeIdleConnections();
+          const timeout = setTimeout(() => server.closeAllConnections(), 1000);
+          timeout.unref();
+        });
+      }
+    },
+  };
+}
