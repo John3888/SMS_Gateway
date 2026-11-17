@@ -17,7 +17,7 @@ npm run build
 npm start
 ```
 
-Setup creates private `.env` and `app-keys.json` configuration files with different random device/application keys. These are credentials/settings, not a message database. Existing files are never overwritten. If you already have `.env`, edit it and provide `APP_KEYS` JSON or an `APP_KEYS_FILE` pointing to a populated key file. `app-keys.example.json` shows the format. Restart after changing settings. Keep application IDs stable when rotating their keys.
+Setup creates missing configuration files with separate random device/application keys and validates existing settings. Existing files and credentials are never overwritten. If `.env` already exists but its application-key file is missing, rerun `npm run setup` to create that file while preserving the device key. Inline `APP_KEYS` JSON is also supported; otherwise `APP_KEYS_FILE` selects the key file (default `./app-keys.json`). These files contain credentials/settings, not a message database. `app-keys.example.json` shows the format. Restart after changing settings. Keep application IDs stable when rotating their keys.
 
 The default local listener is `http://127.0.0.1:3000`. Development with automatic restart: `npm run dev`. Restarting also clears all in-memory jobs, history, quotas and deduplication keys.
 
