@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+model RequestRecord {
+  id String @id @db.Char(36)
+  application String @db.VarChar(191)
+  status String @db.VarChar(16)
+  created DateTime @db.DateTime(3)
+  updated DateTime @db.DateTime(3)
+  events RequestEvent[]
+  @@index([application, created])
+  @@index([created])
+}
+model RequestEvent {
+  id Int @id @default(autoincrement())
+  requestId String @db.Char(36)
+  request RequestRecord @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  status String @db.VarChar(16)
+  at DateTime @db.DateTime(3)
+  detail String? @db.VarChar(400)
+  @@index([requestId, id])
+}

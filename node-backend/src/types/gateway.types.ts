@@ -11,6 +11,7 @@ export interface QueueLimits {
 export type QueueLimitsInput = Partial<Record<keyof QueueLimits, unknown>>;
 
 export interface ApplicationConfig {
+  webhook?: { url: string; secret: string };
   id: string;
   key: string;
   rate_per_minute: number;

@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { AppError } from "../../middlewares/error.middleware.js";
-import type { ApplicationConfig, Clock, QueueLimits } from "../../types/gateway.types.js";
+import type {
+  ApplicationConfig,
+  Clock,
+  QueueLimits,
+} from "../../types/gateway.types.js";
 import type {
   SmsJob,
   ForgottenJob,
@@ -13,8 +17,19 @@ import { SMS_ID, validateSms } from "./sms.validation.js";
 import { publicJob } from "./sms.response.js";
 
 const ACTIVE = new Set<SmsStatus>(["queued", "claimed", "sending"]);
-const TERMINAL = new Set<SmsStatus>(["submitted", "failed", "unknown", "expired", "cancelled"]);
-function limit(value: unknown, fallback: number, min: number, max: number): number {
+const TERMINAL = new Set<SmsStatus>([
+  "submitted",
+  "failed",
+  "unknown",
+  "expired",
+  "cancelled",
+]);
+function limit(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   const n = value === undefined ? fallback : Number(value);
   if (!Number.isInteger(n) || n < min || n > max)
     throw new AppError(503, "Invalid rate/queue configuration");
@@ -39,7 +54,11 @@ export class SmsService {
   turn = 0;
   activeId: string | null = null;
   waiterCount = 0;
-  constructor(config: Partial<QueueLimits> = {}, clock: Clock = () => Date.now()) {
+  constructor(
+    config: Partial<QueueLimits> = {},
+    clock: Clock = () => Date.now(),
+    private readonly record: (job: SmsJob) => void = () => {},
+  ) {
     this.clock = clock;
     this.maxPending = limit(config.MAX_PENDING, 100, 1, 10000);
     this.globalRate = limit(config.GLOBAL_SMS_PER_MINUTE, 12, 1, 1000);
@@ -52,19 +71,29 @@ export class SmsService {
     job.error = error;
     job.updated_at = this.clock();
     job.completed_at = this.clock();
+    this.record(job);
     if (this.activeId === job.id) this.activeId = null;
-    for (const resolve of [...(this.waiters.get(job.id) || [])]) resolve({ ...job });
+    for (const resolve of [...(this.waiters.get(job.id) || [])])
+      resolve({ ...job });
   }
   prune() {
     const now = this.clock();
     for (const job of this.jobs.values())
-      if (job.status === "queued" && job.expires_at <= now) this.finish(job, "expired");
+      if (job.status === "queued" && job.expires_at <= now)
+        this.finish(job, "expired");
     const completed = [...this.jobs.values()]
       .filter((job) => TERMINAL.has(job.status))
-      .sort((a, b) => (a.completed_at ?? 0) - (b.completed_at ?? 0) || a.sequence - b.sequence);
+      .sort(
+        (a, b) =>
+          (a.completed_at ?? 0) - (b.completed_at ?? 0) ||
+          a.sequence - b.sequence,
+      );
     let remaining = completed.length;
     for (const job of completed) {
-      if (now - (job.completed_at ?? 0) < this.historyMs && remaining <= this.maxCompleted)
+      if (
+        now - (job.completed_at ?? 0) < this.historyMs &&
+        remaining <= this.maxCompleted
+      )
         continue;
       this.jobs.delete(job.id);
       this.keys.delete(`${job.app_id}:${job.request_key}`);
@@ -76,7 +105,11 @@ export class SmsService {
     const now = this.clock(),
       previous = this.buckets.get(id);
     const tokens = previous
-      ? Math.min(burst, previous.tokens + (Math.max(0, now - previous.updated_at) * rate) / 60000)
+      ? Math.min(
+          burst,
+          previous.tokens +
+            (Math.max(0, now - previous.updated_at) * rate) / 60000,
+        )
       : burst;
     if (tokens < 1)
       throw new AppError(
@@ -107,11 +140,21 @@ export class SmsService {
         existing.message !== data.message ||
         existing.ttl_seconds !== ttl
       )
-        throw new AppError(409, "Idempotency key already used with different content or TTL");
+        throw new AppError(
+          409,
+          "Idempotency key already used with different content or TTL",
+        );
       return { job: { ...existing }, created: false };
     }
-    const pending = [...this.jobs.values()].filter((job) => ACTIVE.has(job.status));
-    const appMax = limit(app.max_pending, Math.min(20, this.maxPending), 1, this.maxPending);
+    const pending = [...this.jobs.values()].filter((job) =>
+      ACTIVE.has(job.status),
+    );
+    const appMax = limit(
+      app.max_pending,
+      Math.min(20, this.maxPending),
+      1,
+      this.maxPending,
+    );
     if (
       pending.length >= this.maxPending ||
       pending.filter((job) => job.app_id === app.id).length >= appMax
@@ -134,7 +177,11 @@ export class SmsService {
       limit(app.rate_per_minute, 10, 1, 1000),
       limit(app.burst, 5, 1, 1000),
     );
-    const globalBudget = this.allowance("sms:global", this.globalRate, this.globalBurst);
+    const globalBudget = this.allowance(
+      "sms:global",
+      this.globalRate,
+      this.globalBurst,
+    );
     const job: SmsJob = {
       id: randomUUID(),
       app_id: app.id,
@@ -152,20 +199,23 @@ export class SmsService {
     this.buckets.set("sms:global", globalBudget);
     this.daily.set(app.id, { day, used: used + 1 });
     this.jobs.set(job.id, job);
+    this.record(job);
     this.keys.set(`${app.id}:${job.request_key}`, job.id);
     return { job: { ...job }, created: true };
   }
   get(app: string, id: string): SmsJob {
     this.prune();
     const job = this.jobs.get(id);
-    if (!job || job.app_id !== app) throw new AppError(404, "Job not found or no longer retained");
+    if (!job || job.app_id !== app)
+      throw new AppError(404, "Job not found or no longer retained");
     return { ...job };
   }
   cancel(app: string, id: string): SmsJob {
     const snapshot = this.get(app, id),
       job = this.jobs.get(id)!;
     if (snapshot.status === "cancelled") return snapshot;
-    if (snapshot.status !== "queued") throw new AppError(409, "Only queued jobs can be cancelled");
+    if (snapshot.status !== "queued")
+      throw new AppError(409, "Only queued jobs can be cancelled");
     this.finish(job, "cancelled");
     const result = { ...job };
     this.prune();
@@ -197,8 +247,9 @@ export class SmsService {
   counts(app: string) {
     this.prune();
     return {
-      pending: [...this.jobs.values()].filter((job) => job.app_id === app && ACTIVE.has(job.status))
-        .length,
+      pending: [...this.jobs.values()].filter(
+        (job) => job.app_id === app && ACTIVE.has(job.status),
+      ).length,
       queue_capacity: this.maxPending,
     };
   }
@@ -206,7 +257,8 @@ export class SmsService {
     const job = this.jobs.get(id);
     if (!job) throw new AppError(404, "Job no longer retained");
     if (TERMINAL.has(job.status)) return Promise.resolve({ ...job });
-    if (this.waiterCount >= 100) throw new AppError(429, "Too many waiting API calls", 1);
+    if (this.waiterCount >= 100)
+      throw new AppError(429, "Too many waiting API calls", 1);
     return new Promise<SmsJob>((resolve) => {
       const listeners = this.waiters.get(id) || new Set<JobWaiter>();
       const done: JobWaiter = (snapshot) => {
@@ -230,7 +282,11 @@ export class SmsService {
     if (!input || typeof input !== "object" || Array.isArray(input))
       throw new AppError(422, "Invalid claim token");
     const data = input as Record<string, unknown>;
-    if (!data || typeof data.token !== "string" || !/^[a-f0-9]{64}$/.test(data.token))
+    if (
+      !data ||
+      typeof data.token !== "string" ||
+      !/^[a-f0-9]{64}$/.test(data.token)
+    )
       throw new AppError(422, "Invalid claim token");
     this.prune();
     if (type === "claim") {
@@ -242,13 +298,14 @@ export class SmsService {
         .filter((job) => job.status === "queued")
         .sort(
           (a, b) =>
-            (this.served.get(a.app_id) || 0) - (this.served.get(b.app_id) || 0) ||
-            a.sequence - b.sequence,
+            (this.served.get(a.app_id) || 0) -
+              (this.served.get(b.app_id) || 0) || a.sequence - b.sequence,
         )[0];
       if (!job) return null;
       job.status = "claimed";
       job.claim_token = data.token;
       job.updated_at = this.clock();
+      this.record(job);
       this.activeId = job.id;
       this.claims.set(data.token, job.id);
       this.served.set(job.app_id, ++this.turn);
@@ -262,7 +319,10 @@ export class SmsService {
         !["submitted", "failed", "unknown"].includes(data.status)
       )
         throw new AppError(422, "Invalid result status");
-      if (data.error != null && (typeof data.error !== "string" || data.error.length > 400))
+      if (
+        data.error != null &&
+        (typeof data.error !== "string" || data.error.length > 400)
+      )
         throw new AppError(422, "Invalid error");
       if (
         data.modem_reference != null &&
@@ -281,20 +341,30 @@ export class SmsService {
         id: data.id,
         status: "unknown",
         forgotten: true,
-        error: "Backend no longer retains this job; original send outcome is unconfirmed",
+        error:
+          "Backend no longer retains this job; original send outcome is unconfirmed",
       };
     }
-    if (!job || job.claim_token !== data.token) throw new AppError(404, "Claim not found");
+    if (!job || job.claim_token !== data.token)
+      throw new AppError(404, "Claim not found");
     if (type === "start") {
       if (!["claimed", "sending"].includes(job.status))
         throw new AppError(409, "Job already completed");
+      if (job.status === "sending") return { ...job };
       job.status = "sending";
       job.updated_at = this.clock();
+      this.record(job);
     } else if (type === "result") {
       if (TERMINAL.has(job.status)) return { ...job };
-      if (job.status !== "sending") throw new AppError(409, "Start job before reporting a result");
-      job.modem_reference = (data.modem_reference as number | undefined) ?? null;
-      this.finish(job, data.status as SmsStatus, (data.error as string | undefined) || null);
+      if (job.status !== "sending")
+        throw new AppError(409, "Start job before reporting a result");
+      job.modem_reference =
+        (data.modem_reference as number | undefined) ?? null;
+      this.finish(
+        job,
+        data.status as SmsStatus,
+        (data.error as string | undefined) || null,
+      );
     } else throw new AppError(422, "Unknown device message type");
     const result = { ...job };
     this.prune();
@@ -303,7 +373,11 @@ export class SmsService {
   clear() {
     for (const job of this.jobs.values())
       if (ACTIVE.has(job.status))
-        this.finish(job, "unknown", "Backend stopped; job state is no longer retained");
+        this.finish(
+          job,
+          "unknown",
+          "Backend stopped; job state is no longer retained",
+        );
     this.jobs.clear();
     this.keys.clear();
     this.claims.clear();

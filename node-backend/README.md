@@ -1,5 +1,7 @@
 # Node SMS backend — no database
 
+For persistent MySQL request history and the admin dashboard, follow the [dashboard and Docker setup](../README.md). The memory-only descriptions below apply when auditing is disabled. The live queue always stays in memory.
+
 A standalone Express + WebSocket backend for the ESP32 gateway. Each API call returns JSON. Jobs, rate counters, request keys and recent results exist **only in memory**. No SMS data is written to disk and no database service is required.
 
 ```text
@@ -177,3 +179,18 @@ npm run build
 ```
 
 Check `GET /healthz` after starting the backend, then authenticated `GET /api/v1/health` after connecting the ESP32. Verify your own phone receives a message after deploying the server and configuring the ESP32's host/key/CA. Test suites, integration examples and formatting tooling are omitted from this deployment-focused source folder.
+
+## Application result webhooks
+
+Add an optional `webhook` object to the submitting application's existing entry in `node-backend/app-keys.json` (or `APP_KEYS`). Keep its current fields and restart the gateway after editing. Supply the URL of a POST endpoint on the receiving application and a separate signing secret shared with that receiver. Generate a secret with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Use HTTPS outside local development.
+
+```json
+"webhook": {
+  "url": "https://your-app.example/webhooks/sms",
+  "secret": "<replace with the generated secret>"
+}
+```
+
+A new asynchronous POST to `/api/v1/sms` returns HTTP 202 with an `id`. The callback identifies that job as `job_id`. Each final transition produces an `sms.completed` event with status `submitted`, `failed`, `unknown`, `expired` or `cancelled`. Submitted means the modem accepted the SMS. The payload also includes event_id, application, idempotency_key, updated_at, modem_reference and error.
+
+Verify the X-Gateway-Signature header against "sha256=" followed by the lowercase hexadecimal HMAC-SHA256 of the raw request body using the shared secret. Record event_id once, update the matching job, and return 2xx. The gateway retries network errors, timeouts, HTTP 408, 429 and 5xx twice after delays of one and three seconds. Delivery attempts are held in memory and can be lost on abrupt restart. While the job is retained, its status is available at GET /api/v1/sms/:id using the application's bearer token.

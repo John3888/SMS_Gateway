@@ -57,8 +57,18 @@ export function validateConfig(config: GatewayOptions): GatewayConfig {
       app.key === config.deviceKey
     )
       throw new Error("Application ids/keys must be valid and distinct from DEVICE_KEY");
+    let webhook: ApplicationConfig["webhook"];
+    if (app.webhook !== undefined) {
+      const hook = app.webhook as Record<string, unknown> | null;
+      const url = typeof hook?.url === "string" ? URL.parse(hook.url) : null;
+      if (!url || !["https:", "http:"].includes(url.protocol) || url.username || url.password ||
+          url.hash || !validSecret(hook?.secret) || hook.secret === app.key || hook.secret === config.deviceKey)
+        throw new Error("Configure a webhook URL and a separate random signing secret for " + app.id);
+      webhook = { url: url.href, secret: hook.secret };
+    }
     return {
       ...app,
+      webhook,
       id: app.id,
       key: app.key,
       rate_per_minute: integer(app.rate_per_minute, 10, 1, 1000, "rate_per_minute"),

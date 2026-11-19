@@ -29,3 +29,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): GatewayConfig 
     },
   });
 }
+
+export function loadAdminConfig(env: NodeJS.ProcessEnv = process.env) {
+  const { DATABASE_URL, ADMIN_USERNAME, ADMIN_PASSWORD } = env;
+  if (!DATABASE_URL && !ADMIN_USERNAME && !ADMIN_PASSWORD) return null;
+  if (!DATABASE_URL || !ADMIN_USERNAME?.trim() || !ADMIN_PASSWORD || ADMIN_PASSWORD.length < 12)
+    throw new Error("Set DATABASE_URL, ADMIN_USERNAME and ADMIN_PASSWORD (12 or more characters)");
+  return { username: ADMIN_USERNAME.trim(), password: ADMIN_PASSWORD, secureCookie: env.ADMIN_COOKIE_SECURE !== "false" };
+}

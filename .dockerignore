@@ -1,0 +1,16 @@
+**
+!frontend/
+!frontend/package*.json
+!frontend/tsconfig.json
+!frontend/next.config.ts
+!frontend/app/**
+!frontend/components/**
+!frontend/services/**
+!frontend/types/**
+!frontend/public/**
+!node-backend/
+!node-backend/package*.json
+!node-backend/tsconfig.json
+!node-backend/src/**
+!node-backend/scripts/**
+!node-backend/prisma/**

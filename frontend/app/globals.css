@@ -1,26 +1,140 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+* {
+  box-sizing: border-box;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: #f3f6f5;
+  color: #152f30;
+  font:
+    16px/1.5 system-ui,
+    sans-serif;
+}
+main {
+  max-width: 1160px;
+  margin: auto;
+  padding: 28px;
+}
+header,
+.bar,
+footer,
+nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+header {
+  font-weight: 700;
+  border-bottom: 1px solid #c4d1cc;
+  padding-bottom: 20px;
+}
+.mark {
+  background: #135750;
+  color: white;
+  border-radius: 8px;
+  padding: 2px 9px;
+}
+small,
+time {
+  color: #506965;
+}
+header small {
+  margin-left: auto;
+}
+section,
+form {
+  background: white;
+  padding: clamp(18px, 4vw, 42px);
+  border: 1px solid #d5dfdc;
+  border-radius: 14px;
+  margin: 36px 0;
+}
+form {
+  max-width: 420px;
+}
+h1 {
+  letter-spacing: -0.04em;
+  font-size: clamp(28px, 4vw, 44px);
+  margin: 0 0 18px;
+}
+.bar {
+  justify-content: space-between;
+}
+nav {
+  border-bottom: 1px solid #d5dfdc;
+  padding-bottom: 14px;
+}
+button,
+input,
+select {
+  font: inherit;
+  padding: 8px 12px;
+  border: 1px solid #b5c6c2;
+  border-radius: 6px;
+  background: white;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+button[aria-pressed="true"],
+form button {
+  background: #125950;
+  color: white;
+}
+label {
+  display: grid;
+  gap: 5px;
+  margin: 18px 0;
+  font-weight: 600;
+  max-width: 100%;
+}
+select {
+  width: fit-content;
+  max-width: 100%;
+}
+.scroll {
+  overflow-x: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+th,
+td {
+  padding: 12px 8px;
+  text-align: left;
+  border-bottom: 1px solid #dce5e2;
+}
+th {
+  color: #526762;
+}
+.link {
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  color: #14665a;
+  font: 13px monospace;
+}
+b {
+  background: #e3f0ec;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+footer {
+  margin-top: 20px;
+  font-size: 14px;
+}
+li {
+  padding: 8px;
+}
+time {
+  margin-right: 14px;
+}
+[role="alert"] {
+  color: #96352e;
 }

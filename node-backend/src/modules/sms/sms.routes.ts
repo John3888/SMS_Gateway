@@ -11,7 +11,7 @@ export function createSmsRoutes(queue: SmsService, notify: () => void) {
     express.raw({ type: () => true, limit: 1024 }),
     controller.submit,
   );
-  router.get("/api/v1/sms", controller.list);
+  router.get("/api/sms", controller.list);
   router.get("/api/v1/sms/:id", controller.get);
   router.delete("/api/v1/sms/:id", controller.cancel);
   return router;
