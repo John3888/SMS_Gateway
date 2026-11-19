@@ -8,9 +8,9 @@
 !frontend/services/**
 !frontend/types/**
 !frontend/public/**
-!node-backend/
-!node-backend/package*.json
-!node-backend/tsconfig.json
-!node-backend/src/**
-!node-backend/scripts/**
-!node-backend/prisma/**
+!backend/
+!backend/package*.json
+!backend/tsconfig.json
+!backend/src/**
+!backend/scripts/**
+!backend/prisma/**

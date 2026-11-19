@@ -4,7 +4,7 @@ Use /admin/dashboard (or /) to view SMS requests by application. Select a reques
 
 ## Configure the backend
 
-Use one running gateway process. Provision a MySQL database and put its connection URL and administrator credentials in node-backend/.env:
+Use one running gateway process. Provision a MySQL database and put its connection URL and administrator credentials in backend/.env:
 
 ```dotenv
 DATABASE_URL="mysql://sms_user:URL_ENCODED_PASSWORD@localhost:3306/sms_gateway"
@@ -13,7 +13,7 @@ ADMIN_PASSWORD="<choose a unique password of at least 12 characters>"
 ADMIN_COOKIE_SECURE=false
 ```
 
-Use ADMIN_COOKIE_SECURE=false for local HTTP. Set it to true when deploying with HTTPS. Keep the application and device credentials. From node-backend run:
+Use ADMIN_COOKIE_SECURE=false for local HTTP. Set it to true when deploying with HTTPS. Keep the application and device credentials. From backend run:
 
 ```sh
 npm ci --include=dev

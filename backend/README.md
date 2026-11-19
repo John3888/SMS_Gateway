@@ -28,7 +28,7 @@ The default local listener is `http://127.0.0.1:3000`. Development with automati
 The backend follows the TripTIcket backend's TypeScript/ES module conventions: central server, routes and realtime files, shared configuration and middleware, and feature modules with routes, controllers, services, validation and types.
 
 ```text
-node-backend/
+backend/
   src/
     server.ts              # Environment loading, startup and shutdown
     app.ts                 # Testable HTTP server and service composition
@@ -46,7 +46,7 @@ node-backend/
 
 Use `npm run dev` while editing. For deployment, install dependencies, run `npm run build`, then `npm start`. The build outputs `dist/src/server.js`; rebuild after source changes. `.env` and `app-keys.json` remain in the backend root. The API routes, JSON responses, WebSocket protocol and in-memory behavior are unchanged by this restructuring.
 
-Deploy the `node-backend` folder to your VPS and run one Node process under your service manager with automatic startup/restart. Set its working directory to this folder so `.env` and `app-keys.json` resolve correctly. Keep `HOST=127.0.0.1` when the reverse proxy runs on the same VPS. Your reverse proxy should expose HTTPS/WSS on public port 443 and forward HTTP plus WebSocket upgrades to Node's internal port (3000 by default), with an idle timeout longer than the 30-second heartbeat. No persistent message storage is needed.
+Deploy the `backend` folder to your VPS and run one Node process under your service manager with automatic startup/restart. Set its working directory to this folder so `.env` and `app-keys.json` resolve correctly. Keep `HOST=127.0.0.1` when the reverse proxy runs on the same VPS. Your reverse proxy should expose HTTPS/WSS on public port 443 and forward HTTP plus WebSocket upgrades to Node's internal port (3000 by default), with an idle timeout longer than the 30-second heartbeat. No persistent message storage is needed.
 
 Install build dependencies with `npm ci --include=dev`, build with `npm run build`, and start with `npm start`. Run `npm run setup` only on a new installation; preserve existing credentials on subsequent deployments. Local `node_modules` and `dist` are omitted from the source folder and regenerated on the VPS. Configuration templates and the setup script are retained because they are needed to configure a new server.
 
@@ -182,7 +182,7 @@ Check `GET /healthz` after starting the backend, then authenticated `GET /api/v1
 
 ## Application result webhooks
 
-Add an optional `webhook` object to the submitting application's existing entry in `node-backend/app-keys.json` (or `APP_KEYS`). Keep its current fields and restart the gateway after editing. Supply the URL of a POST endpoint on the receiving application and a separate signing secret shared with that receiver. Generate a secret with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Use HTTPS outside local development.
+Add an optional `webhook` object to the submitting application's existing entry in `backend/app-keys.json` (or `APP_KEYS`). Keep its current fields and restart the gateway after editing. Supply the URL of a POST endpoint on the receiving application and a separate signing secret shared with that receiver. Generate a secret with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Use HTTPS outside local development.
 
 ```json
 "webhook": {

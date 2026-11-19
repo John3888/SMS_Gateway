@@ -3,12 +3,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 FROM base AS builder
-COPY node-backend/package*.json ./
-COPY node-backend/prisma ./prisma
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma
 RUN npm ci && npx --no-install prisma generate
-COPY node-backend/tsconfig.json ./
-COPY node-backend/src ./src
-COPY node-backend/scripts ./scripts
+COPY backend/tsconfig.json ./
+COPY backend/src ./src
+COPY backend/scripts ./scripts
 RUN npm run build
 
 FROM base AS runner
