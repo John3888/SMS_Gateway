@@ -12,8 +12,8 @@ COPY backend/scripts ./scripts
 RUN npm run build
 
 FROM base AS runner
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=5008
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=5400
 COPY --from=builder --chown=node:node /app ./
 USER node
-EXPOSE 5008
+EXPOSE 5400
 CMD ["npm", "start"]

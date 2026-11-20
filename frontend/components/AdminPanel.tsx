@@ -37,7 +37,7 @@ export default function AdminPanel() {
   useEffect(() => {
     if (!signedIn) return;
     const controller = new AbortController();
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout>; 
     async function refresh() {
       try {
         const result = await adminGet<RequestPage>(
@@ -120,7 +120,7 @@ export default function AdminPanel() {
       ) : (
         <section>
           <div className="bar">
-            <h1>Request monitor</h1>
+            <h1>Request Monitoring</h1>
             <button
               onClick={async () => {
                 try { await logout(); } catch { setError("Sign-out failed. Please try again."); return; }

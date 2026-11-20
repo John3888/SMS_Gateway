@@ -1,34 +1,31 @@
+
 name: sms-gateway
+
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+    image: ghcr.io/john3888/sms-gateway-api:latest
     restart: unless-stopped
     env_file:
       - ./backend/.env
       - path: ./backend/.env.docker
         required: false
     environment:
-      HOST: 0.0.0.0
-      PORT: 5008
+      HOST: "0.0.0.0"
+      PORT: "5008"
     volumes:
       - ./backend/app-keys.json:/app/app-keys.json:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command:
-      - sh
-      - -ec
-      - |
-        if [ -n "$$DATABASE_URL" ]; then ./node_modules/.bin/prisma migrate deploy; fi
-        exec node dist/src/server.js
+    command: >
+      sh -ec 'if [ -n "$$DATABASE_URL" ]; then
+      ./node_modules/.bin/prisma migrate deploy;
+      fi;
+      exec node dist/src/server.js'
     ports:
       - "5008:5008"
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
+    image: ghcr.io/john3888/sms-gateway-web:latest
     restart: unless-stopped
     depends_on:
       - backend
