@@ -27,6 +27,6 @@ The gateway records accepted SMS jobs and their status transitions starting when
 
 ## Run the panel
 
-From frontend run `npm ci` and `npm run dev`. Open http://192.168.1.108:3000/admin/dashboard on your LAN. Sign in with the configured username and password. Your session lasts up to eight hours and ends on sign-out or a backend restart.
+From frontend run `npm ci` and `npm run dev`, or use Docker Compose. Open http://localhost:8501/admin/dashboard. Sign in with the configured username and password. Your session lasts up to eight hours and ends on sign-out or a backend restart. The interface is built with React and Next.js.
 
-Set GATEWAY_ORIGIN in frontend/.env.local to the backend address reachable from Next.js (here http://192.168.1.108:5008). Docker builds use http://backend:5008. The browser accesses /admin-api on the frontend origin.
+Set GATEWAY_ORIGIN in frontend/.env.local to the backend address reachable from Next.js (default http://127.0.0.1:8500). Docker uses http://backend:8500. All gateway endpoints use the /api prefix; admin operations are under /api/admin, and the frontend proxies /api requests to the backend.

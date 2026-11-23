@@ -40,7 +40,7 @@ export function createGateway(options: GatewayOptions) {
   app.use((_req, _res, next) =>
     next(closing ? new AppError(503, "Backend is stopping") : undefined),
   );
-  if (audit) app.use("/admin-api", audit.router);
+  if (audit) app.use("/api/admin", audit.router);
   app.use(createRoutes(config, queue, realtime));
   app.use((_req, _res, next) => next(new AppError(404, "Endpoint not found")));
   app.use(errorHandler);
@@ -49,7 +49,7 @@ export function createGateway(options: GatewayOptions) {
     server,
     queue,
     async listen(
-      port = config.port || 3000,
+      port = config.port || 8500,
       host = config.host || "127.0.0.1",
     ) {
       await audit?.initialize();

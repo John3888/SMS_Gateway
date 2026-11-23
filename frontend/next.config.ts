@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   allowedDevOrigins: localAddresses,
   async rewrites() {
-    const backend = process.env.GATEWAY_ORIGIN || "http://127.0.0.1:5008";
-    return [{ source: "/admin-api/:path*", destination: backend + "/admin-api/:path*" }];
+    const backend = process.env.GATEWAY_ORIGIN || "http://127.0.0.1:8500";
+    return [{ source: "/api/:path*", destination: backend + "/api/:path*" }];
   },
   experimental: {
     agentFeedback: true,

@@ -4,6 +4,9 @@ name: sms-gateway
 services:
   backend:
     image: ghcr.io/john3888/sms-gateway-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.api
     restart: unless-stopped
     env_file:
       - ./backend/.env
@@ -11,7 +14,7 @@ services:
         required: false
     environment:
       HOST: "0.0.0.0"
-      PORT: "5008"
+      PORT: "8500"
     volumes:
       - ./backend/app-keys.json:/app/app-keys.json:ro
     extra_hosts:
@@ -22,12 +25,17 @@ services:
       fi;
       exec node dist/src/server.js'
     ports:
-      - "5008:5008"
+      - "8500:8500"
 
   frontend:
     image: ghcr.io/john3888/sms-gateway-web:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        GATEWAY_ORIGIN: http://backend:8500
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "3001:3000"
+      - "8501:8501"

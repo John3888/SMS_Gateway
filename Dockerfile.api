@@ -1,19 +1,68 @@
-FROM node:22-bookworm-slim AS base
-WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+# syntax=docker/dockerfile:1.7
 
-FROM base AS builder
-COPY backend/package*.json ./
-COPY backend/prisma ./prisma
-RUN npm ci && npx --no-install prisma generate
-COPY backend/tsconfig.json ./
-COPY backend/src ./src
-COPY backend/scripts ./scripts
+FROM node:24-bookworm-slim AS base
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        openssl \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+
+FROM base AS dependencies
+
+COPY backend/package.json backend/package-lock.json ./
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
+
+
+FROM dependencies AS builder
+
+WORKDIR /app
+
+COPY backend ./
+
+RUN DATABASE_URL="mysql://unused:unused@localhost:3306/unused" \
+    npx prisma generate
+
 RUN npm run build
 
-FROM base AS runner
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=5400
-COPY --from=builder --chown=node:node /app ./
-USER node
+
+FROM node:24-bookworm-slim AS runner
+
+ENV NODE_ENV=production
+ENV PORT=5400
+ENV EMB_PRINT_BROWSER_PATH=/usr/bin/chromium
+ENV EMB_PRINT_NO_SANDBOX=true
+ENV HOME=/home/api
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        openssl \
+        ca-certificates \
+        chromium \
+        fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --system --gid 1001 nodejs \
+    && useradd --system --uid 1001 --gid nodejs api \
+    && mkdir -p /app/logs /home/api \
+    && chown -R api:nodejs /app /home/api
+
+COPY --from=builder --chown=api:nodejs /app/dist ./dist
+COPY --from=builder --chown=api:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=api:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=api:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=api:nodejs /app/package-lock.json ./package-lock.json
+COPY --from=builder --chown=api:nodejs /app/node_modules ./node_modules
+
+USER api
+
 EXPOSE 5400
+
 CMD ["npm", "start"]

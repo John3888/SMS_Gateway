@@ -11,7 +11,7 @@ export function authenticationRoutes(admin: NonNullable<ReturnType<typeof loadAd
   const sessions = new Map<string, number>();
   const username = digest(admin.username);
   const password = digest(admin.password);
-  const cookie = { httpOnly: true, sameSite: "strict" as const, secure: admin.secureCookie, path: "/admin-api" };
+  const cookie = { httpOnly: true, sameSite: "strict" as const, secure: admin.secureCookie, path: "/api/admin" };
   // The gateway runs as a single instance behind the admin UI proxy.
   let failures = 0;
   let windowEnd = 0;

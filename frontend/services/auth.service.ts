@@ -1,5 +1,5 @@
 export async function login(username: string, password: string) {
-  const response = await fetch("/admin-api/authentication/login", {
+  const response = await fetch("/api/admin/authentication/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -10,6 +10,6 @@ export async function login(username: string, password: string) {
 }
 
 export async function logout() {
-  const response = await fetch("/admin-api/authentication/logout", { method: "POST" });
+  const response = await fetch("/api/admin/authentication/logout", { method: "POST" });
   if (!response.ok && response.status !== 401) throw new Error("Sign-out failed. Please try again.");
 }

@@ -17,7 +17,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): GatewayConfig 
   }
   return validateConfig({
     host: env.HOST || "127.0.0.1",
-    port: integer(env.PORT, 3000, 1, 65535, "PORT"),
+    port: integer(env.PORT, 8500, 1, 65535, "PORT"),
     apps,
     deviceKey: env.DEVICE_KEY,
     limits: {

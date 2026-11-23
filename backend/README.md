@@ -21,7 +21,7 @@ npm start
 
 Setup creates missing configuration files with separate random device/application keys and validates existing settings. Existing files and credentials are never overwritten. If `.env` already exists but its application-key file is missing, rerun `npm run setup` to create that file while preserving the device key. Inline `APP_KEYS` JSON is also supported; otherwise `APP_KEYS_FILE` selects the key file (default `./app-keys.json`). These files contain credentials/settings, not a message database. `app-keys.example.json` shows the format. Restart after changing settings. Keep application IDs stable when rotating their keys.
 
-The default local listener is `http://127.0.0.1:3000`. Development with automatic restart: `npm run dev`. Restarting also clears all in-memory jobs, history, quotas and deduplication keys.
+The default local listener is `http://127.0.0.1:8500`. Development with automatic restart: `npm run dev`. Restarting also clears all in-memory jobs, history, quotas and deduplication keys.
 
 ## Project structure
 
@@ -46,7 +46,7 @@ backend/
 
 Use `npm run dev` while editing. For deployment, install dependencies, run `npm run build`, then `npm start`. The build outputs `dist/src/server.js`; rebuild after source changes. `.env` and `app-keys.json` remain in the backend root. The API routes, JSON responses, WebSocket protocol and in-memory behavior are unchanged by this restructuring.
 
-Deploy the `backend` folder to your VPS and run one Node process under your service manager with automatic startup/restart. Set its working directory to this folder so `.env` and `app-keys.json` resolve correctly. Keep `HOST=127.0.0.1` when the reverse proxy runs on the same VPS. Your reverse proxy should expose HTTPS/WSS on public port 443 and forward HTTP plus WebSocket upgrades to Node's internal port (3000 by default), with an idle timeout longer than the 30-second heartbeat. No persistent message storage is needed.
+Deploy the `backend` folder to your VPS and run one Node process under your service manager with automatic startup/restart. Set its working directory to this folder so `.env` and `app-keys.json` resolve correctly. Keep `HOST=127.0.0.1` when the reverse proxy runs on the same VPS. Your reverse proxy should expose HTTPS/WSS on public port 443 and forward HTTP plus WebSocket upgrades to Node's internal port (8500 by default), with an idle timeout longer than the 30-second heartbeat. No persistent message storage is needed.
 
 Install build dependencies with `npm ci --include=dev`, build with `npm run build`, and start with `npm start`. Run `npm run setup` only on a new installation; preserve existing credentials on subsequent deployments. Local `node_modules` and `dist` are omitted from the source folder and regenerated on the VPS. Configuration templates and the setup script are retained because they are needed to configure a new server.
 
