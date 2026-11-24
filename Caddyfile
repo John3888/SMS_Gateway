@@ -1,0 +1,6 @@
+sms.jgccorporatesolutions.com {
+	@backend path /api/* /device/ws /sms-send /healthz
+	reverse_proxy @backend backend:5400
+
+	reverse_proxy frontend:3400
+}

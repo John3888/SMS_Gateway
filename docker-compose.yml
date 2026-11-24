@@ -1,22 +1,19 @@
-
 name: sms-gateway
 
 services:
-  backend:
+  backend:  
     image: ghcr.io/john3888/sms-gateway-api:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.api
     restart: unless-stopped
     env_file:
-      - ./backend/.env
+      - .env
       - path: ./backend/.env.docker
         required: false
     environment:
       HOST: "0.0.0.0"
-      PORT: "8500"
+      PORT: "5400"
+      APP_KEYS_FILE: "/app/app-keys.json"
     volumes:
-      - ./backend/app-keys.json:/app/app-keys.json:ro
+      - ./app-keys.json:/app/app-keys.json:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -25,17 +22,42 @@ services:
       fi;
       exec node dist/src/server.js'
     ports:
-      - "8500:8500"
+      - "127.0.0.1:5400:5400"
+    networks:
+      - mysqldb-nt-network
+
 
   frontend:
     image: ghcr.io/john3888/sms-gateway-web:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-      args:
-        GATEWAY_ORIGIN: http://backend:8500
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "8501:8501"
+      - "127.0.0.1:3400:3400"
+    networks:
+      - mysqldb-nt-network
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - mysqldb-nt-network
+
+networks:
+  mysqldb-nt-network:
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:
