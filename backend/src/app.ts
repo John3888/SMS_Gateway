@@ -49,8 +49,8 @@ export function createGateway(options: GatewayOptions) {
     server,
     queue,
     async listen(
-      port = config.port || 8500,
-      host = config.host || "127.0.0.1",
+      port = config.port || 5400,
+      host = config.host || "192.168.1.108",
     ) {
       await audit?.initialize();
       return new Promise<AddressInfo>((resolve, reject) => {
